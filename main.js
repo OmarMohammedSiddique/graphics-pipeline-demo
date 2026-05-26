@@ -23,35 +23,71 @@ window.addEventListener('mousemove', (e) => {
 // --- DATA DEFINITION ---
 // Defining the vertices and edges (faces) for our two objects.
 
-// Object 1: 3D Cube
-const cubeVertices = [
-    [-1, -1, -1], [ 1, -1, -1], [ 1,  1, -1], [-1,  1, -1],
-    [-1, -1,  1], [ 1, -1,  1], [ 1,  1,  1], [-1,  1,  1]
+// Object 1: 3D Icosahedron (Crystal Shape)
+const phi = (1 + Math.sqrt(5)) / 2;
+const icosahedronVertices = [
+    [-1,  phi, 0], [ 1,  phi, 0], [-1, -phi, 0], [ 1, -phi, 0],
+    [0, -1,  phi], [0,  1,  phi], [0, -1, -phi], [0,  1, -phi],
+    [ phi, 0, -1], [ phi, 0,  1], [-phi, 0, -1], [-phi, 0,  1]
 ];
-const cubeEdges = [
-    [0, 1], [1, 2], [2, 3], [3, 0], // Back face
-    [4, 5], [5, 6], [6, 7], [7, 4], // Front face
-    [0, 4], [1, 5], [2, 6], [3, 7]  // Connecting edges
-];
+// Calculate edges based on distance (distance between neighboring vertices is exactly 2)
+const icosahedronEdges = [];
+for (let i = 0; i < icosahedronVertices.length; i++) {
+    for (let j = i + 1; j < icosahedronVertices.length; j++) {
+        const dx = icosahedronVertices[i][0] - icosahedronVertices[j][0];
+        const dy = icosahedronVertices[i][1] - icosahedronVertices[j][1];
+        const dz = icosahedronVertices[i][2] - icosahedronVertices[j][2];
+        const distSq = dx*dx + dy*dy + dz*dz;
+        // 2 squared is 4
+        if (Math.abs(distSq - 4) < 0.1) {
+            icosahedronEdges.push([i, j]);
+        }
+    }
+}
 
-// Object 2: 3D Pyramid
-const pyramidVertices = [
-    [ 0,  1,  0], // Top apex
-    [-1, -1, -1], [ 1, -1, -1], [ 1, -1,  1], [-1, -1,  1] // Base
-];
-const pyramidEdges = [
-    [1, 2], [2, 3], [3, 4], [4, 1], // Base edges
-    [0, 1], [0, 2], [0, 3], [0, 4]  // Side edges to apex
-];
+// Object 2: 3D Torus (Wireframe Donut)
+function createTorus(R, r, radialSegments, tubularSegments) {
+    const vertices = [];
+    const edges = [];
+    
+    // Generate vertices
+    for (let i = 0; i <= radialSegments; i++) {
+        for (let j = 0; j <= tubularSegments; j++) {
+            const u = (i / radialSegments) * Math.PI * 2;
+            const v = (j / tubularSegments) * Math.PI * 2;
+            
+            const x = (R + r * Math.cos(v)) * Math.cos(u);
+            const y = (R + r * Math.cos(v)) * Math.sin(u);
+            const z = r * Math.sin(v);
+            
+            vertices.push([x, y, z]);
+        }
+    }
+    
+    // Generate edges to form the wireframe grid
+    for (let i = 0; i < radialSegments; i++) {
+        for (let j = 0; j < tubularSegments; j++) {
+            const current = i * (tubularSegments + 1) + j;
+            const next = current + 1;
+            const bottom = current + (tubularSegments + 1);
+            
+            edges.push([current, next]); // Horizontal ring
+            edges.push([current, bottom]); // Vertical loop
+        }
+    }
+    
+    return { vertices, edges };
+}
+const torusData = createTorus(1.5, 0.6, 20, 12);
 
 // Object instances to hold their unique transformations
 const objects = [
     {
-        name: 'Cube',
-        vertices: cubeVertices,
-        edges: cubeEdges,
-        scale: 100,
-        xOffset: -200, // Position on screen
+        name: 'Icosahedron',
+        vertices: icosahedronVertices,
+        edges: icosahedronEdges,
+        scale: 60,
+        xOffset: -250, // Position on screen
         yOffset: 0,
         rotationX: 0,
         rotationY: 0,
@@ -60,11 +96,11 @@ const objects = [
         shadowColor: '#ff0055'
     },
     {
-        name: 'Pyramid',
-        vertices: pyramidVertices,
-        edges: pyramidEdges,
-        scale: 120,
-        xOffset: 200, // Position on screen
+        name: 'Torus',
+        vertices: torusData.vertices,
+        edges: torusData.edges,
+        scale: 65,
+        xOffset: 250, // Position on screen
         yOffset: 0,
         rotationX: 0,
         rotationY: 0,
