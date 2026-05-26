@@ -81,34 +81,36 @@ function createTorus(R, r, radialSegments, tubularSegments) {
 const torusData = createTorus(1.5, 0.6, 20, 12);
 
 // Object instances to hold their unique transformations
-const objects = [
-    {
-        name: 'Icosahedron',
-        vertices: icosahedronVertices,
-        edges: icosahedronEdges,
-        scale: 60,
-        xOffset: -250, // Position on screen
-        yOffset: 0,
-        rotationX: 0,
-        rotationY: 0,
-        rotationZ: 0,
-        color: '#ff0055', // Neon Pink
-        shadowColor: '#ff0055'
-    },
-    {
-        name: 'Torus',
-        vertices: torusData.vertices,
-        edges: torusData.edges,
-        scale: 65,
-        xOffset: 250, // Position on screen
-        yOffset: 0,
-        rotationX: 0,
-        rotationY: 0,
-        rotationZ: 0,
-        color: '#00ccff', // Neon Cyan
-        shadowColor: '#00ccff'
-    }
-];
+const objects = [];
+const neonColors = ['#ff0055', '#00ccff', '#00ffcc', '#ffcc00', '#cc00ff'];
+
+// Generate 30 scattered shapes around the screen
+for (let i = 0; i < 30; i++) {
+    const isIcosahedron = Math.random() > 0.5;
+    const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+    
+    // Spread them widely across the assumed screen space
+    const xOffset = (Math.random() - 0.5) * 3000; 
+    const yOffset = (Math.random() - 0.5) * 2000;
+    
+    objects.push({
+        name: isIcosahedron ? 'Icosahedron' : 'Torus',
+        vertices: isIcosahedron ? icosahedronVertices : torusData.vertices,
+        edges: isIcosahedron ? icosahedronEdges : torusData.edges,
+        scale: 15 + Math.random() * 45, // Random sizes
+        xOffset: xOffset,
+        yOffset: yOffset,
+        baseYOffset: yOffset, // Store base to calculate floating effect
+        rotationX: Math.random() * Math.PI * 2,
+        rotationY: Math.random() * Math.PI * 2,
+        rotationZ: Math.random() * Math.PI * 2,
+        rotationSpeedX: (Math.random() - 0.5) * 0.03,
+        rotationSpeedY: (Math.random() - 0.5) * 0.03,
+        rotationSpeedZ: (Math.random() - 0.5) * 0.03,
+        color: color,
+        shadowColor: color
+    });
+}
 
 // Main Graphics Loop
 function gameLoop() {
@@ -121,12 +123,12 @@ function gameLoop() {
     // Update object rotations based on a base speed + mouse position modifier
     objects.forEach(obj => {
         // Base rotation speed + interactivity
-        obj.rotationX += 0.01 + (mouseY * 0.02);
-        obj.rotationY += 0.01 + (mouseX * 0.02);
-        obj.rotationZ += 0.005;
+        obj.rotationX += obj.rotationSpeedX + (mouseY * 0.02);
+        obj.rotationY += obj.rotationSpeedY + (mouseX * 0.02);
+        obj.rotationZ += obj.rotationSpeedZ;
         
         // Add a slight floating effect (changing yOffset over time)
-        obj.yOffset = Math.sin(Date.now() / 500 + obj.xOffset) * 20;
+        obj.yOffset = obj.baseYOffset + Math.sin(Date.now() / 500 + obj.xOffset) * 50;
     });
 
     // Clear screen for the next frame
