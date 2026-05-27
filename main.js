@@ -12,9 +12,61 @@ window.addEventListener('resize', resize);
 resize();
 
 // Global states for interactivity
-let reverseOrbit = false;
-window.addEventListener('click', () => {
-    reverseOrbit = !reverseOrbit;
+const bgm = document.getElementById('bgm');
+let audioContextStarted = false;
+
+let isDragging = false;
+let lastMouseAngle = 0;
+let dragVelocity = 0; // To track how fast we are scratching
+
+window.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    
+    // Attempt to play audio on first interaction
+    if (!audioContextStarted) {
+        bgm.play().catch(err => console.log("Audio play failed, ensure track.mp3 exists:", err));
+        audioContextStarted = true;
+        const instruction = document.querySelector('.overlay p strong');
+        if (instruction) instruction.innerText = "Audio Started!";
+    }
+    
+    // Calculate initial angle of mouse relative to center
+    const centerX = width / 2;
+    const centerY = height / 2;
+    lastMouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const currentMouseAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX);
+    
+    // Calculate difference (delta) in angle
+    let deltaAngle = currentMouseAngle - lastMouseAngle;
+    
+    // Handle wrap-around at PI and -PI
+    if (deltaAngle > Math.PI) deltaAngle -= Math.PI * 2;
+    if (deltaAngle < -Math.PI) deltaAngle += Math.PI * 2;
+    
+    // Apply this delta directly to all planets for the "scratch" effect
+    planets.forEach(planet => {
+        planet.angle += deltaAngle;
+    });
+    
+    // Track velocity for audio pitch shifting
+    dragVelocity = deltaAngle;
+    
+    lastMouseAngle = currentMouseAngle;
+});
+
+window.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+window.addEventListener('mouseleave', () => {
+    isDragging = false;
 });
 
 // --- DATA DEFINITION ---
@@ -42,14 +94,29 @@ function gameLoop() {
     // This stage handles the high-level logic, user input, and 
     // updating the state of objects (like updating planetary angles).
     
-    // Update planetary angles based on speed and click interaction
-    planets.forEach(planet => {
-        if (reverseOrbit) {
-            planet.angle -= planet.speed;
-        } else {
+    // Only automatically rotate planets if not scratching
+    if (!isDragging) {
+        planets.forEach(planet => {
             planet.angle += planet.speed;
+        });
+        
+        // Return audio playback to normal speed
+        if (bgm.playbackRate !== 1) {
+            // Smoothly lerp back to 1.0
+            bgm.playbackRate += (1.0 - bgm.playbackRate) * 0.1;
         }
-    });
+    } else {
+        // While scratching, adjust audio playback rate based on scratch speed
+        // Math.abs because negative playbackRate isn't supported in all browsers natively
+        // We multiply dragVelocity by a factor to make it noticeable
+        let targetRate = Math.abs(dragVelocity) * 20;
+        
+        // Clamp the rate between 0.1 and 4.0
+        targetRate = Math.max(0.1, Math.min(targetRate, 4.0));
+        
+        // Smoothly lerp to target rate for less jarring audio shifts
+        bgm.playbackRate += (targetRate - bgm.playbackRate) * 0.5;
+    }
 
     // Clear screen for the next frame
     ctx.clearRect(0, 0, width, height);
