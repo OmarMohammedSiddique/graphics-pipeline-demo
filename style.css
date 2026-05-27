@@ -34,8 +34,8 @@ canvas {
 .overlay h1 {
     font-size: 1.5rem;
     margin-bottom: 10px;
-    color: #FFD700;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    color: #00FFFF;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
 }
 
 .overlay p {
