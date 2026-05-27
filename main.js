@@ -82,12 +82,20 @@ const torusData = createTorus(1.5, 0.6, 20, 12);
 
 // Object instances to hold their unique transformations
 const objects = [];
-const neonColors = ['#ff0055', '#00ccff', '#00ffcc', '#ffcc00', '#cc00ff'];
+// Iconic Formula 1 Team Colors
+const f1Colors = [
+    '#E10600', // F1 Official Red / Ferrari
+    '#00D2BE', // Mercedes Teal
+    '#FF8700', // McLaren Papaya
+    '#0090FF', // Williams/Alpine Blue
+    '#FCD700', // Red Bull Yellow
+    '#006F62'  // Aston Martin Green
+];
 
 // Generate 30 scattered shapes around the screen
 for (let i = 0; i < 30; i++) {
     const isIcosahedron = Math.random() > 0.5;
-    const color = neonColors[Math.floor(Math.random() * neonColors.length)];
+    const color = f1Colors[Math.floor(Math.random() * f1Colors.length)];
     
     // Spread them widely across the assumed screen space
     const xOffset = (Math.random() - 0.5) * 3000; 
